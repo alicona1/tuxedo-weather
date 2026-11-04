@@ -13,11 +13,30 @@ docker run -d --name tuxedo-weather --restart unless-stopped \
   ghcr.io/alicona1/tuxedo-weather:latest
 ```
 
-The image runs on `amd64` and `arm64`, so a Raspberry Pi works. To build it yourself instead: `docker build -t tuxedo-weather .`
+The image runs on `amd64`, `arm64` and `arm/v7`, so it works on a Raspberry Pi 2 or later with either 64-bit or 32-bit Raspberry Pi OS. To build it yourself instead: `docker build -t tuxedo-weather .`
 
 Then point the panel at it. The panel is hardcoded to `weather.tuxconnect.info`, with `weather1.tuxconnect.info` and `weather2.tuxconnect.info` as fallbacks, always on port 10086. Add all three to your local DNS (Pi-hole, your router, etc.) with your server's address. The panel fetches sun times at startup and then once a day, so restart it once to see everything right away.
 
-Without Docker: `pip install -r requirements.txt && python app.py`.
+### Run it without Docker
+
+On a Raspberry Pi Zero or Pi 1, use this instead: current Docker doesn't support their CPU. It also suits any Pi where you'd rather not run Docker. You need Python 3.9 or later, which Raspberry Pi OS already has.
+
+```bash
+sudo apt install -y git python3-venv
+sudo git clone https://github.com/alicona1/tuxedo-weather.git /opt/tuxedo-weather
+sudo python3 -m venv /opt/tuxedo-weather/venv
+sudo /opt/tuxedo-weather/venv/bin/pip install -r /opt/tuxedo-weather/requirements.txt
+sudo cp /opt/tuxedo-weather/deploy/tuxedo-weather.service /etc/systemd/system/
+sudo nano /etc/systemd/system/tuxedo-weather.service   # set NWS_CONTACT
+sudo systemctl enable --now tuxedo-weather
+```
+
+It starts at boot, restarts if it crashes, and runs as a throwaway user that can only write its saved data in `/var/lib/tuxedo-weather`. Logs: `journalctl -u tuxedo-weather`. To update:
+
+```bash
+cd /opt/tuxedo-weather && sudo git pull
+sudo venv/bin/pip install -r requirements.txt && sudo systemctl restart tuxedo-weather
+```
 
 ### Settings
 

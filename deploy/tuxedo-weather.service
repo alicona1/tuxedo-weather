@@ -1,0 +1,30 @@
+# Runs tuxedo-weather without Docker, e.g. on a Raspberry Pi Zero.
+# See "Run it without Docker" in README.md for the install steps.
+#
+# Before enabling it, set NWS_CONTACT below to your email or website. It goes
+# in the User-Agent sent to the National Weather Service.
+
+[Unit]
+Description=Weather server for the Honeywell Tuxedo Touch panel
+Documentation=https://github.com/alicona1/tuxedo-weather
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Environment=NWS_CONTACT=
+# Saved ZIP lookup and last weather, so a restart during an outage still has data.
+Environment=CACHE_DIR=/var/lib/tuxedo-weather
+StateDirectory=tuxedo-weather
+ExecStart=/opt/tuxedo-weather/venv/bin/python /opt/tuxedo-weather/app.py
+Restart=on-failure
+RestartSec=5
+
+# Run as a throwaway user that can only write its own state directory.
+DynamicUser=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

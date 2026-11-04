@@ -1,7 +1,8 @@
 name: release
 
 # Pushing a tag like v1.2.3 publishes ghcr.io/alicona1/tuxedo-weather:1.2.3
-# and :latest for amd64 and arm64, then creates the GitHub release. Running
+# and :latest for amd64, arm64 and arm/v7 (32-bit Raspberry Pi OS), then
+# creates the GitHub release. Running
 # it by hand (workflow_dispatch) does everything except publish.
 on:
   push:
@@ -40,27 +41,29 @@ jobs:
       - uses: docker/setup-buildx-action@v3
 
       # The panel needs the literal "HTTP/1.1 200 OK", and the server must stop
-      # cleanly on SIGTERM. Check both on the real image before publishing.
-      - name: Build for smoke test
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          load: true
-          tags: tuxedo-weather:smoke
-      - name: Smoke test
+      # cleanly on SIGTERM. Check both on every architecture before publishing
+      # (QEMU runs the ARM images, so they get a longer startup wait).
+      - name: Smoke test each architecture
         run: |
-          docker run -d --name smoke -p 10086:10086 tuxedo-weather:smoke
-          for i in $(seq 30); do
-            status=$(printf 'GET /health HTTP/1.1\r\nHost: localhost\r\n\r\n' | nc -w 2 localhost 10086 | head -1 | tr -d '\r') || true
-            [ "$status" = "HTTP/1.1 200 OK" ] && break
-            sleep 1
+          set -eu
+          for platform in linux/amd64 linux/arm64 linux/arm/v7; do
+            echo "== $platform"
+            docker buildx build --load --platform "$platform" -t tuxedo-weather:smoke .
+            docker run -d --name smoke --platform "$platform" -p 10086:10086 tuxedo-weather:smoke
+            status=
+            for i in $(seq 90); do
+              status=$(printf 'GET /health HTTP/1.1\r\nHost: localhost\r\n\r\n' | nc -w 2 localhost 10086 | head -1 | tr -d '\r') || true
+              [ "$status" = "HTTP/1.1 200 OK" ] && break
+              sleep 1
+            done
+            echo "status line: $status"
+            [ "$status" = "HTTP/1.1 200 OK" ]
+            start=$(date +%s); docker stop smoke >/dev/null; took=$(( $(date +%s) - start ))
+            code=$(docker inspect smoke --format '{{.State.ExitCode}}')
+            echo "docker stop took ${took}s, exit code $code"
+            [ "$code" = 0 ] && [ "$took" -lt 5 ]
+            docker rm smoke >/dev/null
           done
-          echo "status line: $status"
-          [ "$status" = "HTTP/1.1 200 OK" ]
-          start=$(date +%s); docker stop smoke >/dev/null; took=$(( $(date +%s) - start ))
-          code=$(docker inspect smoke --format '{{.State.ExitCode}}')
-          echo "docker stop took ${took}s, exit code $code"
-          [ "$code" = 0 ] && [ "$took" -lt 5 ]
 
       - uses: docker/metadata-action@v5
         id: meta
@@ -76,11 +79,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build for amd64 and arm64
+      - name: Build for amd64, arm64 and arm/v7
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: ${{ env.PUBLISH == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -92,4 +95,4 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes \
             --title "$GITHUB_REF_NAME" \
-            --notes "Image: \`${IMAGE}:${GITHUB_REF_NAME#v}\` (also \`:latest\`), for amd64 and arm64."
+            --notes "Image: \`${IMAGE}:${GITHUB_REF_NAME#v}\` (also \`:latest\`), for amd64, arm64 and arm/v7."
