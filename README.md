@@ -7,14 +7,26 @@ It was built by reverse engineering the panel's firmware (TUXW V5.3.21.0). The p
 ## Run it
 
 ```bash
-docker build -t tuxedo-weather .
 docker run -d --name tuxedo-weather --restart unless-stopped \
-  -v tuxedo-weather-data:/data -p 10086:10086 tuxedo-weather
+  -e NWS_CONTACT=you@example.com \
+  -v tuxedo-weather-data:/data -p 10086:10086 \
+  ghcr.io/alicona1/tuxedo-weather:latest
 ```
+
+The image runs on `amd64` and `arm64`, so a Raspberry Pi works. To build it yourself instead: `docker build -t tuxedo-weather .`
 
 Then point the panel at it. The panel is hardcoded to `weather.tuxconnect.info`, with `weather1.tuxconnect.info` and `weather2.tuxconnect.info` as fallbacks, always on port 10086. Add all three to your local DNS (Pi-hole, your router, etc.) with your server's address. The panel fetches sun times at startup and then once a day, so restart it once to see everything right away.
 
 Without Docker: `pip install -r requirements.txt && python app.py`.
+
+### Settings
+
+| Variable | Default | What it's for |
+|----------|---------|---------------|
+| `NWS_CONTACT` | none | Your email or website. It goes in the User-Agent sent to the National Weather Service, which asks for a way to reach whoever runs an app in case of a problem. Please set it. |
+| `CACHE_DIR` | `/data` | Where the last weather and ZIP lookup are saved, so a restart during an outage still has data. |
+
+The panel only connects to port 10086, so keep that port.
 
 ## Where the weather comes from
 
@@ -23,6 +35,10 @@ Without Docker: `pip install -r requirements.txt && python app.py`.
 - **Current conditions:** the nearest National Weather Service station, through [api.weather.gov](https://www.weather.gov/documentation/services-web-api), when its report is less than 90 minutes old. Otherwise the model fills in.
 
 Results are cached for 10 minutes and saved to `/data`. If the upstream services are down, the server keeps serving the last good data for up to 6 hours.
+
+**Weather data by [Open-Meteo.com](https://open-meteo.com/), licensed under [CC BY 4.0](https://open-meteo.com/en/licence).** Open-Meteo's free API is for non-commercial use, such as personal home automation. If you run this for customers or a business, you need an [Open-Meteo API subscription](https://open-meteo.com/en/pricing).
+
+The panel's forecast screen says "Weather forecast provided by Accuweather." That's fixed text in the firmware. With this server, the data comes from Open-Meteo and the National Weather Service, not AccuWeather.
 
 ## Test a server without a panel
 

@@ -36,10 +36,19 @@ GEOCODE_URL = 'https://geocoding-api.open-meteo.com/v1/search'
 # (e.g. KMDW, Chicago Midway, for 60601): measured values instead of
 # NBM's model estimate, which ran about 3°F warm on a calm morning. The model
 # fills in any field the station can't provide, and the icon always comes
-# from the model. NWS requires a User-Agent identifying the client.
+# from the model. NWS requires a User-Agent identifying the client, and asks
+# for contact details so it can reach whoever runs it. That's the operator of
+# each copy of this server, so it comes from NWS_CONTACT (an email or URL).
 NWS_API = 'https://api.weather.gov'
+
+
+def _nws_user_agent(contact: str) -> str:
+    contact = ' '.join(contact.split())  # no CR/LF: it goes in a header
+    return f'tuxedo-weather ({contact})' if contact else 'tuxedo-weather (self-hosted; NWS_CONTACT not set)'
+
+
 NWS_HEADERS = {
-    'User-Agent': 'tuxedo-weather (https://github.com/alicona1/tuxedo-weather)',
+    'User-Agent': _nws_user_agent(os.environ.get('NWS_CONTACT', '')),
     'Accept': 'application/geo+json',
 }
 MAX_OBS_AGE = 90 * 60    # ignore observations older than this

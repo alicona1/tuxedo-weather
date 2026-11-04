@@ -99,3 +99,22 @@ def test_failed_station_lookup_retried_after_backoff(client, upstream):
 def test_health_shows_station(client):
     client.post(f'/us/cur/{ZIP}.xml')
     assert client.get('/health').get_json()['stations'] == {ZIP: STATION}
+
+
+# --- The NWS User-Agent names whoever runs the server, not this repo
+
+
+def test_user_agent_carries_the_operators_contact():
+    assert app_module._nws_user_agent('you@example.com') == 'tuxedo-weather (you@example.com)'
+
+
+def test_user_agent_without_a_contact_points_at_nobody():
+    # Every copy of the server used to send this repo's URL, so NWS would
+    # have contacted us about other people's traffic.
+    ua = app_module._nws_user_agent('')
+    assert ua.startswith('tuxedo-weather') and 'github.com' not in ua and 'NWS_CONTACT' in ua
+
+
+def test_user_agent_contact_cannot_inject_headers():
+    assert '\r' not in app_module._nws_user_agent('a@b.c\r\nX-Evil: 1')
+    assert '\n' not in app_module._nws_user_agent('a@b.c\r\nX-Evil: 1')
