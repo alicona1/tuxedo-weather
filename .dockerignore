@@ -1,0 +1,14 @@
+.env
+*.core
+venv/
+__pycache__/
+node-compile-cache/
+TUXW_V5.3.21.0_CN/
+binary_analysis/
+memory/
+*.jpeg
+*.log
+.git/
+tests/
+.pytest_cache/
+emulator/

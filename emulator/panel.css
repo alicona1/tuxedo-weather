@@ -1,0 +1,138 @@
+:root {
+  --page: #1b1d22;
+  --ink: #e6e8ec;
+  --muted: #9aa1ad;
+  --ok: #5fd38d;
+  --warn: #f0b44c;
+  --bad: #f2716b;
+  --bezel: #e9e6df;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 14px/1.4 system-ui, sans-serif;
+}
+
+main { max-width: 900px; margin: 0 auto; padding: 16px; }
+
+/* The panel is 800x480. panel.js scales it to fit the frame's width. */
+#frame {
+  background: var(--bezel);
+  border-radius: 28px;
+  padding: 24px;
+  overflow: hidden;
+}
+
+#panel {
+  position: relative;
+  width: 800px;
+  height: 480px;
+  overflow: hidden;
+  background: #000;
+  transform-origin: 0 0;
+  /* Qt Embedded draws with bitmap Helvetica (.qpf); this is the closest. */
+  font-family: Helvetica, Arial, "Liberation Sans", sans-serif;
+  color: #fff;
+  user-select: none;
+}
+
+#panel .item { position: absolute; }
+#panel img.item { display: block; }
+
+/* QGraphicsTextItem: 4px document margin, text drawn as given. */
+#panel .text {
+  padding: 4px;
+  white-space: pre;
+  line-height: 1.15;
+}
+#panel .text.wrap { white-space: pre-wrap; }
+#panel .hit { cursor: pointer; }
+#panel .hidden { display: none; }
+
+#panel .status {
+  color: #000;
+  font-weight: bold;
+  text-align: center;
+  width: 800px;
+}
+
+#panel .field {
+  background: #0a1a3a;
+  border: 1px solid #3a6fc4;
+  color: #fff;
+  font-weight: bold;
+  padding: 4px 6px;
+  overflow: hidden;
+}
+
+/* No firmware images: the same layout as outlines on a plain background. */
+#panel.noimages { background: linear-gradient(160deg, #0b2f7a, #04163c 60%, #0b3d8c); }
+#panel .box { border: 1px solid rgba(150, 190, 255, 0.55); border-radius: 8px; }
+#panel .box.round { border-radius: 50%; }
+#panel .box.statusbox { background: #2fbf4f; border: 0; border-radius: 0; }
+#panel .box.button {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: bold; text-align: center; background: rgba(255, 255, 255, 0.06);
+}
+#panel .box.icon {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-family: ui-monospace, monospace; color: #bcd4ff;
+  border-style: dashed;
+}
+
+#panel.sources [data-src="fw"] { outline: 1px solid #39ff88; }
+#panel.sources [data-src="est"] { outline: 1px dashed #ffb02e; }
+
+#controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+#controls input { font: inherit; padding: 4px 6px; }
+#controls input#zip { width: 6em; }
+#controls input#server { width: 16em; }
+#controls input[readonly] { color: var(--muted); }
+
+#verdict {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border-left: 4px solid var(--muted);
+  background: #23262d;
+  font-weight: 600;
+}
+#verdict.ok { border-color: var(--ok); }
+#verdict.warn { border-color: var(--warn); }
+#verdict.bad { border-color: var(--bad); }
+#controls button { font: inherit; padding: 5px 12px; cursor: pointer; }
+
+.legend { color: var(--muted); margin: 8px 0 0; }
+.legend .fw { outline: 1px solid #39ff88; padding: 0 3px; }
+.legend .est { outline: 1px dashed #ffb02e; padding: 0 3px; }
+
+#log { margin-top: 16px; }
+
+#log details {
+  border-left: 3px solid var(--muted);
+  padding: 4px 10px;
+  margin-bottom: 6px;
+  background: #23262d;
+}
+#log details.ok { border-color: var(--ok); }
+#log details.warn { border-color: var(--warn); }
+#log details.bad { border-color: var(--bad); }
+#log summary { cursor: pointer; }
+#log ul { margin: 4px 0; padding-left: 20px; }
+#log pre {
+  margin: 4px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--muted);
+  font-size: 12px;
+}

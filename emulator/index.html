@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tuxedo Panel Emulator</title>
+<link rel="stylesheet" href="panel.css">
+</head>
+<body>
+<main>
+  <div id="frame">
+    <div id="panel" aria-label="Panel screen, 800 by 480"></div>
+  </div>
+
+  <section id="controls">
+    <label>Server <input id="server" spellcheck="false" autocomplete="off"></label>
+    <label>ZIP <input id="zip" inputmode="numeric" maxlength="5" value="60601"></label>
+    <button id="boot" type="button">Fetch</button>
+    <button id="screen" type="button">Show weather screen</button>
+    <label><input id="sources" type="checkbox"> Show layout sources</label>
+  </section>
+
+  <p class="legend">
+    <span class="fw">Solid outline</span>: position and font from disassembly.
+    <span class="est">Dashed outline</span>: estimated from the panel photos.
+  </p>
+
+  <p id="verdict" aria-live="polite">Requesting weather data</p>
+  <section id="log"></section>
+</main>
+<script type="module" src="panel.js"></script>
+</body>
+</html>
